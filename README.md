@@ -2,6 +2,13 @@
 
 A small, local reconciliation service for importing settlement CSVs, matching provider records to transactions, and reviewing exceptions in a responsive operations dashboard.
 
+## Try it out
+
+- **Live application:** [https://rdy5644.github.io/recon-host](https://rdy5644.github.io/recon-host)
+- **Complete source code:** [https://github.com/rdy5644/recon](https://github.com/rdy5644/recon)
+
+The dashboard is hosted on GitHub Pages and connects to the Python API deployed on AWS EC2.
+
 ## What is included
 
 - Python REST API built with FastAPI and SQLite.
