@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#101a2b" />
+    <title>Reconciliation Desk</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+    <link rel="stylesheet" href="/static/workflow.css" />
+    <link rel="stylesheet" href="/static/navigation.css" />
+    <link rel="stylesheet" href="/static/views.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <a class="brand" href="#imports" data-page-link="imports" aria-label="Recon home — start an import">
+          <span class="brand-mark"><span></span><span></span><span></span></span>
+          <span>Recon</span>
+        </a>
+        <div class="workspace-label">WORKSPACE</div>
+        <nav aria-label="Main navigation">
+          <a class="nav-item" href="#overview" data-page-link="overview">
+            <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 20 20"><rect x="2.5" y="2.5" width="6" height="6" rx="1.2"/><rect x="11.5" y="2.5" width="6" height="6" rx="1.2"/><rect x="2.5" y="11.5" width="6" height="6" rx="1.2"/><rect x="11.5" y="11.5" width="6" height="6" rx="1.2"/></svg></span><span class="nav-label">Overview</span>
+          </a>
+          <a class="nav-item active" href="#imports" data-page-link="imports" aria-current="page">
+            <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 20 20"><path d="M10 13V3m0 0L6.5 6.5M10 3l3.5 3.5M4 12.5v3A1.5 1.5 0 0 0 5.5 17h9a1.5 1.5 0 0 0 1.5-1.5v-3"/></svg></span><span class="nav-label">Import</span>
+          </a>
+          <a class="nav-item" href="#results" data-page-link="results" hidden>
+            <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 20 20"><path d="M3 16.5h14M5 13V9m5 4V4m5 9v-6"/></svg></span><span class="nav-label">Results</span>
+          </a>
+          <a class="nav-item" href="#transactions" data-page-link="transactions">
+            <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 20 20"><path d="M3 5h14M3 10h14M3 15h14"/><circle cx="6" cy="5" r=".6"/><circle cx="6" cy="10" r=".6"/><circle cx="6" cy="15" r=".6"/></svg></span><span class="nav-label">Transactions</span>
+          </a>
+        </nav>
+        <div class="sidebar-bottom">
+          <div class="sidebar-note"><span class="live-dot"></span><span>Reconciliation engine<br /><strong>Ready</strong></span></div>
+          <div class="sidebar-foot">FINANCE OPERATIONS<br />TRANSACTION CONTROL</div>
+        </div>
+      </aside>
+
+      <main class="main-content">
+        <div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
+
+        <section class="page-view" id="imports-view" data-page="imports">
+          <section class="page-heading">
+            <div><div class="eyebrow">SETTLEMENT CONTROL CENTER</div><h1>Import settlements</h1><p class="subheading">Upload a provider report to match settlement records and surface exceptions.</p></div>
+          </section>
+
+        <section class="panel import-panel" aria-labelledby="import-title">
+          <div class="import-copy">
+            <div class="eyebrow">START HERE · SETTLEMENT WORKFLOW</div>
+            <h2 id="import-title">Upload a settlement report</h2>
+            <p>Choose your provider CSV. We’ll validate it, match settlements to transactions, and bring exceptions forward for review.</p>
+            <ol class="workflow-steps" aria-label="Reconciliation steps">
+              <li id="workflow-upload" class="current"><span>1</span>Upload</li>
+              <li id="workflow-match"><span>2</span>Match</li>
+              <li id="workflow-review"><span>3</span>Review</li>
+            </ol>
+          </div>
+          <form id="upload-form" class="upload-box">
+            <label for="csv-file" class="file-dropzone" id="file-dropzone">
+              <span class="upload-icon" aria-hidden="true">↑</span>
+              <span class="upload-title" id="file-name">Drop your CSV here</span>
+              <span class="upload-meta"><span class="browse-label">Browse files</span> · CSV up to <span id="upload-limit">loading…</span></span>
+            </label>
+            <input id="csv-file" type="file" accept=".csv,text/csv" required aria-label="Choose settlement CSV file" />
+            <button class="primary-button" type="submit" id="upload-button">Upload and reconcile <span>→</span></button>
+            <div class="upload-helper">CSV needs a settlement ID, date, amount, type and currency. Include a lifecycle ID, or account and merchant details, so we can match it.</div>
+          </form>
+        </section>
+        </section>
+
+        <section class="page-view" id="results-view" data-page="results" hidden>
+          <section class="page-heading results-heading">
+            <div><div class="eyebrow">UPLOAD COMPLETE</div><h1 id="results-title">Reconciliation results</h1><p class="subheading" id="result-file-name">Review the results and any unmatched provider records.</p></div>
+          </section>
+          <section class="result-banner" id="result-banner" aria-live="polite">
+            <span class="result-banner-icon" aria-hidden="true">✓</span>
+            <div><h2 id="result-banner-title">Reconciliation complete</h2><p id="result-banner-copy">Your settlement report has been processed.</p></div>
+          </section>
+          <section class="metric-grid result-metrics" aria-label="Import results">
+            <article class="metric-card"><div class="metric-top"><span class="metric-label">Rows received</span><span class="metric-icon icon-blue">↓</span></div><div class="metric-value" id="result-received">—</div><div class="metric-foot">Rows in this file</div></article>
+            <article class="metric-card"><div class="metric-top"><span class="metric-label">Settlements added</span><span class="metric-icon icon-violet">✓</span></div><div class="metric-value" id="result-added">—</div><div class="metric-foot">New history entries</div></article>
+            <article class="metric-card"><div class="metric-top"><span class="metric-label">Duplicates skipped</span><span class="metric-icon icon-amber">↻</span></div><div class="metric-value" id="result-duplicates">—</div><div class="metric-foot">Already recorded</div></article>
+            <article class="metric-card"><div class="metric-top"><span class="metric-label">Unmatched</span><span class="metric-icon icon-red">!</span></div><div class="metric-value" id="result-unmatched">—</div><div class="metric-foot">Need a manual review</div></article>
+          </section>
+          <div class="result-actions">
+            <a class="secondary-button" href="#transactions" data-page-link="transactions">View transaction queue <span>→</span></a>
+            <a class="primary-button" href="#imports" data-page-link="imports">Import another file <span>＋</span></a>
+          </div>
+          <div class="result-clear-note" id="result-clear-note" hidden>All records in this file matched automatically. You can review the transaction queue or import another file.</div>
+          <section class="panel unmatched-panel" id="unmatched-panel" hidden>
+            <div class="panel-heading"><div><div class="eyebrow">REVIEW REQUIRED</div><h2>Unmatched settlements <span class="count-pill" id="unmatched-count">0</span></h2></div><p class="panel-caption">These provider records could not be linked automatically. Check the reason, correct the source or transaction data, then re-import.</p></div>
+            <div class="table-wrap"><table><thead><tr><th>SETTLEMENT ID</th><th>PROVIDER LIFECYCLE</th><th>ACCOUNT</th><th>MERCHANT</th><th>AMOUNT</th><th>WHY IT DIDN’T MATCH</th><th>LAST SEEN</th></tr></thead><tbody id="unmatched-rows"></tbody></table></div>
+          </section>
+        </section>
+
+        <section class="page-view" id="overview-view" data-page="overview" hidden>
+          <section class="page-heading">
+            <div><div class="eyebrow">SETTLEMENT CONTROL CENTER</div><h1>Reconciliation overview</h1><p class="subheading">Portfolio health across processed transactions and settlements.</p></div>
+          </section>
+        <section class="metric-grid" aria-label="Reconciliation summary">
+          <button class="metric-card metric-action" type="button" data-overview-filter="all" aria-pressed="true" aria-controls="overview-transaction-rows" aria-label="Show all transactions">
+            <div class="metric-top"><span class="metric-label">Transactions processed</span><span class="metric-icon icon-blue">▦</span></div>
+            <div class="metric-value" id="transactions-processed">—</div><div class="metric-foot"><span class="metric-dot blue-dot"></span><span>Across all transaction statuses</span><span class="metric-action-cue">View list ↘</span></div>
+          </button>
+          <button class="metric-card metric-action" type="button" data-overview-filter="settled" aria-pressed="false" aria-controls="overview-transaction-rows" aria-label="Show transactions with settlement history">
+            <div class="metric-top"><span class="metric-label">Settlements recorded</span><span class="metric-icon icon-violet">↗</span></div>
+            <div class="metric-value" id="settlements-processed">—</div><div class="metric-foot"><span class="metric-dot violet-dot"></span><span>Settlement history entries</span><span class="metric-action-cue">View list ↘</span></div>
+          </button>
+          <button class="metric-card alert-card metric-action" type="button" data-overview-filter="critical" aria-pressed="false" aria-controls="overview-transaction-rows" aria-label="Show transactions with critical issues">
+            <div class="metric-top"><span class="metric-label">Critical issues</span><span class="metric-icon icon-red">!</span></div>
+            <div class="metric-value" id="critical-count">—</div><div class="metric-foot"><span class="metric-dot red-dot"></span><span>Requires immediate review</span><span class="metric-action-cue">View list ↘</span></div>
+          </button>
+          <button class="metric-card warning-card metric-action" type="button" data-overview-filter="warning" aria-pressed="false" aria-controls="overview-transaction-rows" aria-label="Show transactions with warnings">
+            <div class="metric-top"><span class="metric-label">Warnings</span><span class="metric-icon icon-amber">⚑</span></div>
+            <div class="metric-value" id="warning-count">—</div><div class="metric-foot"><span class="metric-dot amber-dot"></span><span>Below original debit amount</span><span class="metric-action-cue">View list ↘</span></div>
+          </button>
+        </section>
+
+        <section class="insight-grid">
+          <article class="panel settlement-panel">
+            <div class="panel-heading"><div><div class="eyebrow">PORTFOLIO HEALTH</div><h2>Settlement status</h2></div><span class="subtle-label" id="status-total"></span></div>
+            <div class="status-chart" id="status-chart" aria-label="Settlement status breakdown"></div>
+            <div class="status-legend" id="status-legend"></div>
+          </article>
+          <article class="panel performance-panel">
+            <div class="panel-heading"><div><div class="eyebrow">SETTLEMENT PERFORMANCE</div><h2>Debit target attainment</h2></div><span class="trend-mark">↗</span></div>
+            <div class="performance-row"><div><div class="performance-value" id="settlement-rate">—</div><div class="performance-label">Transactions reaching debit target</div></div><div class="rate-ring" id="rate-ring"><span id="rate-ring-label">—</span></div></div>
+            <div class="performance-divider"></div>
+            <div class="performance-bottom"><div><span class="mini-label">Avg. days to settle</span><strong id="avg-days">—</strong></div><div><span class="mini-label">Outstanding</span><strong id="outstanding-total">—</strong></div></div>
+          </article>
+        </section>
+        <section class="panel transactions-panel overview-transactions-panel" id="overview-transactions" aria-labelledby="overview-transactions-title">
+          <div class="panel-heading transaction-heading">
+            <div><div class="eyebrow">QUICK TRANSACTION VIEW</div><h2 id="overview-transactions-title">Transactions <span class="overview-filter-label" id="overview-filter-label">All transactions</span></h2></div>
+            <div class="transaction-tools">
+              <div class="table-actions"><label class="search-box"><span>⌕</span><input id="overview-search-input" type="search" placeholder="Type to search merchant or ID" aria-label="Search overview transactions as you type" /></label><select id="overview-status-filter" aria-label="Filter overview by settlement status"><option value="">All statuses</option><option value="PENDING">Pending</option><option value="PARTIAL">Partial</option><option value="FULLY_SETTLED">Fully settled</option><option value="OVER_SETTLED">Over settled</option><option value="REFUNDED">Refunded</option><option value="NOT_APPLICABLE">Not applicable</option></select><select id="overview-issue-filter" aria-label="Filter overview by issue"><option value="">All issues</option><option value="critical">Critical</option><option value="warning">Warnings</option><option value="none">No issue</option></select></div>
+              <div class="export-actions" aria-label="Export overview transactions"><button class="secondary-button" type="button" data-export-format="csv" data-export-source="overview">Export CSV</button><button class="secondary-button" type="button" data-export-format="pdf" data-export-source="overview">Export PDF</button></div>
+            </div>
+          </div>
+          <details class="advanced-filter-panel" data-filter-scope="overview">
+            <summary>More filters</summary>
+            <div class="advanced-filter-grid">
+              <label>Transaction date from<input type="date" id="overview-date-from" data-filter="transaction_date_from" /></label>
+              <label>Transaction date to<input type="date" id="overview-date-to" data-filter="transaction_date_to" /></label>
+              <label>Last settlement from<input type="date" id="overview-last-date-from" data-filter="last_settlement_date_from" /></label>
+              <label>Last settlement to<input type="date" id="overview-last-date-to" data-filter="last_settlement_date_to" /></label>
+              <label>Minimum amount<input type="number" id="overview-amount-min" data-filter="amount_min" min="0" step="0.01" inputmode="decimal" placeholder="0.00" /></label>
+              <label>Maximum amount<input type="number" id="overview-amount-max" data-filter="amount_max" min="0" step="0.01" inputmode="decimal" placeholder="Any" /></label>
+              <label>Currency<select id="overview-currency" data-filter="currency"><option value="">All currencies</option></select></label>
+            </div>
+          </details>
+          <div class="table-wrap"><table><thead><tr><th>TRANSACTION</th><th>DATE</th><th>MERCHANT</th><th>AMOUNT</th><th>SETTLEMENT</th><th>SETTLED AMOUNT</th><th>ISSUE</th><th></th></tr></thead><tbody id="overview-transaction-rows"><tr><td colspan="8" class="empty-state">Loading transactions…</td></tr></tbody></table></div>
+          <div class="table-footer"><span id="overview-result-count">—</span><div class="table-pagination" aria-label="Overview transaction pages"><button class="page-button" type="button" id="overview-previous" disabled>Previous</button><span id="overview-page-label">Page 1 of 1</span><button class="page-button" type="button" id="overview-next" disabled>Next</button></div><span>Select a row to view its settlement history</span></div>
+        </section>
+        </section>
+
+        <section class="page-view" id="transactions-view" data-page="transactions" hidden>
+          <section class="page-heading">
+            <div><div class="eyebrow">RECONCILIATION QUEUE</div><h1>Transactions</h1><p class="subheading">Search by transaction, lifecycle, merchant or account. Narrow results by date, amount, currency, status and issue.</p></div>
+          </section>
+        <section class="panel transactions-panel">
+          <div class="panel-heading transaction-heading">
+            <div><div class="eyebrow">TRANSACTION RECORDS</div><h2>All transactions</h2></div>
+            <div class="transaction-tools">
+              <div class="table-actions"><label class="search-box"><span>⌕</span><input id="search-input" type="search" placeholder="Type to search merchant or ID" aria-label="Search transactions as you type" /></label><select id="status-filter" aria-label="Filter by settlement status"><option value="">All statuses</option><option value="PENDING">Pending</option><option value="PARTIAL">Partial</option><option value="FULLY_SETTLED">Fully settled</option><option value="OVER_SETTLED">Over settled</option><option value="REFUNDED">Refunded</option><option value="NOT_APPLICABLE">Not applicable</option></select><select id="issue-filter" aria-label="Filter by issue"><option value="">All issues</option><option value="critical">Critical</option><option value="warning">Warnings</option><option value="none">No issue</option></select></div>
+              <div class="export-actions" aria-label="Export transactions"><button class="secondary-button" type="button" data-export-format="csv" data-export-source="transactions">Export CSV</button><button class="secondary-button" type="button" data-export-format="pdf" data-export-source="transactions">Export PDF</button></div>
+            </div>
+          </div>
+          <details class="advanced-filter-panel" data-filter-scope="transactions">
+            <summary>More filters</summary>
+            <div class="advanced-filter-grid">
+              <label>Transaction date from<input type="date" id="tx-date-from" data-filter="transaction_date_from" /></label>
+              <label>Transaction date to<input type="date" id="tx-date-to" data-filter="transaction_date_to" /></label>
+              <label>Last settlement from<input type="date" id="tx-last-date-from" data-filter="last_settlement_date_from" /></label>
+              <label>Last settlement to<input type="date" id="tx-last-date-to" data-filter="last_settlement_date_to" /></label>
+              <label>Minimum amount<input type="number" id="tx-amount-min" data-filter="amount_min" min="0" step="0.01" inputmode="decimal" placeholder="0.00" /></label>
+              <label>Maximum amount<input type="number" id="tx-amount-max" data-filter="amount_max" min="0" step="0.01" inputmode="decimal" placeholder="Any" /></label>
+              <label>Currency<select id="tx-currency" data-filter="currency"><option value="">All currencies</option></select></label>
+            </div>
+          </details>
+          <div class="table-wrap"><table><thead><tr><th>TRANSACTION</th><th>DATE</th><th>MERCHANT</th><th>AMOUNT</th><th>SETTLEMENT</th><th>SETTLED AMOUNT</th><th>ISSUE</th><th></th></tr></thead><tbody id="transaction-rows"><tr><td colspan="8" class="empty-state">Loading transactions…</td></tr></tbody></table></div>
+          <div class="table-footer"><span id="result-count">—</span><div class="table-pagination" aria-label="Transaction list pages"><button class="page-button" type="button" id="transactions-previous" disabled>Previous</button><span id="transactions-page-label">Page 1 of 1</span><button class="page-button" type="button" id="transactions-next" disabled>Next</button></div><span>Amounts are shown in the transaction currency</span></div>
+        </section>
+        </section>
+
+        <footer class="page-footer">Reconciliation Desk <span>·</span> Designed for accurate settlement review</footer>
+      </main>
+    </div>
+
+    <div class="modal-backdrop" id="detail-backdrop" hidden>
+      <aside class="detail-drawer" role="dialog" aria-modal="true" aria-labelledby="detail-title">
+        <div class="drawer-header"><div><div class="eyebrow">TRANSACTION DETAILS</div><h2 id="detail-title">Transaction</h2></div><button class="icon-button close-button" id="close-detail" aria-label="Close details">×</button></div>
+        <div id="detail-content"></div>
+      </aside>
+    </div>
+    <script src="/static/app.js" defer></script>
+  </body>
+</html>

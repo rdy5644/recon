@@ -1,0 +1,145 @@
+.brand,
+.nav-item {
+  transition: color .16s ease, background-color .16s ease, transform .16s ease, box-shadow .16s ease;
+}
+
+.brand:hover {
+  color: #fff;
+}
+
+.brand:hover .brand-mark {
+  transform: translateY(-1px);
+}
+
+.brand-mark {
+  transition: transform .16s ease;
+}
+
+.nav-item {
+  min-width: 0;
+}
+
+.nav-item[hidden] {
+  display: none;
+}
+
+.nav-item:hover {
+  background: #1e2e47;
+  color: #f8faff;
+}
+
+.nav-item:focus-visible,
+.brand:focus-visible {
+  outline: 2px solid #8bb1ff;
+  outline-offset: 3px;
+}
+
+.nav-icon {
+  flex: 0 0 18px;
+  display: grid;
+  place-items: center;
+}
+
+.nav-icon svg {
+  display: block;
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.nav-item.active {
+  color: #f8faff;
+}
+
+.nav-item.active .nav-icon {
+  color: #82a9ff;
+}
+
+@media (max-width: 700px) {
+  .sidebar {
+    position: sticky;
+    top: 0;
+    width: 100%;
+    height: auto;
+    gap: 8px;
+    padding: 9px 14px 8px;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    box-shadow: 0 5px 16px rgba(16, 26, 43, .16);
+  }
+
+  .brand {
+    min-height: 25px;
+    height: 25px;
+    padding-left: 1px;
+  }
+
+  .workspace-label,
+  .sidebar-bottom {
+    display: none;
+  }
+
+  .sidebar nav {
+    display: flex;
+    gap: 5px;
+    width: 100%;
+  }
+
+  .nav-item {
+    flex: 1 1 0;
+    justify-content: center;
+    gap: 6px;
+    height: 34px;
+    padding: 0 5px;
+    border-radius: 7px;
+    font-size: 10px;
+    white-space: nowrap;
+  }
+
+  .nav-icon {
+    flex-basis: 15px;
+  }
+
+  .nav-icon svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  .nav-item.active {
+    background: #203552;
+    box-shadow: inset 0 -2px #82a9ff;
+  }
+
+  .heading-action {
+    gap: 5px;
+    padding: 9px 10px;
+    font-size: 9px;
+  }
+
+}
+
+@media (max-width: 430px) {
+  .sidebar nav {
+    gap: 3px;
+  }
+
+  .nav-item {
+    gap: 4px;
+    padding: 0 3px;
+    font-size: 8px;
+  }
+
+  .nav-icon {
+    flex-basis: 13px;
+  }
+
+  .nav-icon svg {
+    width: 13px;
+    height: 13px;
+  }
+}
