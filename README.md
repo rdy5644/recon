@@ -13,7 +13,8 @@ The dashboard is hosted on GitHub Pages and connects to the Python API deployed 
 
 - Python REST API built with FastAPI and SQLite.
 - A browser dashboard for summary metrics, transaction search and filters, transaction detail, settlement history, issue recommendations, and a settlement timeline.
-- Advanced transaction filtering by status, issue, currency, transaction date, last settlement date, and amount range; filtered rows can be exported as CSV or PDF reports.
+- Selectable transaction page sizes (25, 50, 100, 250, or 500 rows), shared between Overview and Transactions and remembered in the current browser.
+- Advanced transaction filtering by status, issue, currency, transaction date, last settlement date, and amount range; filtered rows can be exported as CSV or PDF reports. PDF reports use color-coded status and issue labels and include a settlement-status chart with issue counts.
 - CSV validation, lifecycle matching with composite-key fallback, duplicate-safe imports, debit and credit aggregation, and a retained unmatched-settlement queue.
 - SQL schema and sample seed data based on the exercise, plus unit and API tests.
 
@@ -61,7 +62,7 @@ To use an existing exercise database, set `DATABASE_PATH` to its path before sta
 | Method and path | Purpose |
 | --- | --- |
 | `POST /reconcile` | Import CSV as multipart field `file` (or `settlement_report`), raw `text/csv`, or JSON `{ "csv": "..." }`. Returns inserted, duplicate, unmatched, and updated counts. |
-| `GET /transactions` | List/filter transactions. Supports `settlement_status`, `issue=critical\|warning\|none`, `search` across transaction/lifecycle/account/merchant IDs, `currency`, `transaction_date_from`, `transaction_date_to`, `last_settlement_date_from`, `last_settlement_date_to`, `amount_min`, `amount_max`, `limit` (1–500), and `offset`. The dashboard and overview provide previous/next paging so every matching transaction remains reachable. |
+| `GET /transactions` | List/filter transactions. Supports `settlement_status`, `issue=critical\|warning\|none`, `search` across transaction/lifecycle/account/merchant IDs, `currency`, `transaction_date_from`, `transaction_date_to`, `last_settlement_date_from`, `last_settlement_date_to`, `amount_min`, `amount_max`, `limit` (1–500), and `offset`. The dashboard and overview provide selectable page sizes (25, 50, 100, 250, or 500) and previous/next paging so every matching transaction remains reachable. |
 | `GET /transactions/{id}` | Transaction, issues and recommendations, settlement history, and a net settlement timeline. |
 | `GET /dashboard/summary` | Counts by settlement status, issue counts, outstanding amount by currency, average days to settle, and settlement rate. |
 | `GET /unmatched-settlements` | Review retained unmatched provider rows and their match reason. |

@@ -14,7 +14,8 @@ const STATUS_COLORS = {
   refunded: "#8974d8",
   not_applicable: "#b9c1cc",
 };
-const TRANSACTION_PAGE_SIZE = 100;
+const PAGE_SIZE_OPTIONS = [25, 50, 100, 250, 500];
+const DEFAULT_PAGE_SIZE = 100;
 const TRANSACTION_FETCH_SIZE = 500;
 const UNMATCHED_REASONS = {
   LIFECYCLE_NOT_FOUND: "Lifecycle ID not found",
@@ -32,7 +33,16 @@ function readLatestImport() {
   }
 }
 
-const state = { transactions: [], allTransactions: [], overviewTransactions: [], transactionTotal: 0, transactionOffset: 0, overviewOffset: 0, transactionsLoaded: false, overviewFilter: "all", summary: null, latestImport: readLatestImport(), uploadLimitBytes: null, uploadLimitLabel: null };
+function readPreferredPageSize() {
+  try {
+    const saved = Number(localStorage.getItem("recon.pageSize"));
+    return PAGE_SIZE_OPTIONS.includes(saved) ? saved : DEFAULT_PAGE_SIZE;
+  } catch {
+    return DEFAULT_PAGE_SIZE;
+  }
+}
+
+const state = { transactions: [], allTransactions: [], overviewTransactions: [], transactionTotal: 0, transactionOffset: 0, overviewOffset: 0, pageSize: readPreferredPageSize(), transactionsLoaded: false, overviewFilter: "all", summary: null, latestImport: readLatestImport(), uploadLimitBytes: null, uploadLimitLabel: null };
 
 const $ = (selector) => document.querySelector(selector);
 const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({
@@ -183,8 +193,8 @@ function renderTransactions(items, total) {
   state.transactions = items;
   state.transactionTotal = total;
   const body = $("#transaction-rows");
-  const pageCount = Math.max(1, Math.ceil(total / TRANSACTION_PAGE_SIZE));
-  const currentPage = Math.floor(state.transactionOffset / TRANSACTION_PAGE_SIZE) + 1;
+  const pageCount = Math.max(1, Math.ceil(total / state.pageSize));
+  const currentPage = Math.floor(state.transactionOffset / state.pageSize) + 1;
   $("#result-count").textContent = `${total.toLocaleString()} transaction${total === 1 ? "" : "s"}`;
   $("#transactions-page-label").textContent = `Page ${currentPage} of ${pageCount}`;
   $("#transactions-previous").disabled = state.transactionOffset <= 0;
@@ -243,8 +253,8 @@ function renderOverviewTransactions() {
     return true;
   });
   state.overviewTransactions = items;
-  const pageCount = Math.max(1, Math.ceil(items.length / TRANSACTION_PAGE_SIZE));
-  const currentPage = Math.floor(state.overviewOffset / TRANSACTION_PAGE_SIZE) + 1;
+  const pageCount = Math.max(1, Math.ceil(items.length / state.pageSize));
+  const currentPage = Math.floor(state.overviewOffset / state.pageSize) + 1;
   document.querySelectorAll("[data-overview-filter]").forEach((button) => {
     const selected = button.dataset.overviewFilter === state.overviewFilter;
     button.setAttribute("aria-pressed", String(selected));
@@ -253,8 +263,8 @@ function renderOverviewTransactions() {
   $("#overview-result-count").textContent = `${items.length.toLocaleString()} transaction${items.length === 1 ? "" : "s"}`;
   $("#overview-page-label").textContent = `Page ${currentPage} of ${pageCount}`;
   $("#overview-previous").disabled = state.overviewOffset <= 0;
-  $("#overview-next").disabled = state.overviewOffset + TRANSACTION_PAGE_SIZE >= items.length;
-  const pageItems = items.slice(state.overviewOffset, state.overviewOffset + TRANSACTION_PAGE_SIZE);
+  $("#overview-next").disabled = state.overviewOffset + state.pageSize >= items.length;
+  const pageItems = items.slice(state.overviewOffset, state.overviewOffset + state.pageSize);
   $("#overview-transaction-rows").innerHTML = pageItems.length
     ? pageItems.map(transactionRowMarkup).join("")
     : '<tr><td colspan="8" class="empty-state">No transactions match this metric and these filters.</td></tr>';
@@ -392,16 +402,39 @@ function makePdfReport(items, filterLabels) {
   const pageWidth = 842;
   const pageHeight = 595;
   const margin = 32;
+  const pdfStatusStyles = {
+    pending: { fill: "0.78 0.52 0.10", background: "1.00 0.95 0.84" },
+    partial: { fill: "0.84 0.39 0.13", background: "1.00 0.92 0.85" },
+    fully_settled: { fill: "0.16 0.57 0.40", background: "0.88 0.96 0.92" },
+    over_settled: { fill: "0.79 0.20 0.27", background: "1.00 0.90 0.91" },
+    refunded: { fill: "0.48 0.38 0.72", background: "0.94 0.92 0.99" },
+    not_applicable: { fill: "0.47 0.53 0.61", background: "0.93 0.95 0.97" },
+  };
+  const pdfIssueStyles = {
+    critical: { text: "0.68 0.18 0.24", background: "1.00 0.90 0.91" },
+    warning: { text: "0.61 0.39 0.06", background: "1.00 0.96 0.86" },
+    none: { text: "0.16 0.49 0.35", background: "0.89 0.96 0.92" },
+  };
   const columns = [
-    { title: "TRANSACTION", width: 72, value: (item) => item.transaction_id },
-    { title: "DATE", width: 76, value: (item) => item.transaction_date },
-    { title: "MERCHANT", width: 196, value: (item) => item.merchant_name },
-    { title: "ACCOUNT", width: 72, value: (item) => item.account_id },
-    { title: "STATUS", width: 98, value: (item) => titleCase(item.settlement_status) },
-    { title: "AMOUNT", width: 105, value: (item) => `${Number(item.transaction_amount || 0).toFixed(2)} ${item.currency || ""}` },
-    { title: "NET SETTLED", width: 105, value: (item) => `${Number(item.total_settled_amount || 0).toFixed(2)} ${item.currency || ""}` },
-    { title: "ISSUE", width: 54, value: (item) => titleCase(item.issue_severity) },
+    { key: "transaction_id", title: "TRANSACTION", width: 72, value: (item) => item.transaction_id },
+    { key: "transaction_date", title: "DATE", width: 76, value: (item) => item.transaction_date },
+    { key: "merchant_name", title: "MERCHANT", width: 196, value: (item) => item.merchant_name },
+    { key: "account_id", title: "ACCOUNT", width: 72, value: (item) => item.account_id },
+    { key: "settlement_status", title: "STATUS", width: 98, value: (item) => titleCase(item.settlement_status) },
+    { key: "transaction_amount", title: "AMOUNT", width: 105, value: (item) => `${Number(item.transaction_amount || 0).toFixed(2)} ${item.currency || ""}` },
+    { key: "total_settled_amount", title: "NET SETTLED", width: 105, value: (item) => `${Number(item.total_settled_amount || 0).toFixed(2)} ${item.currency || ""}` },
+    { key: "issue_severity", title: "ISSUE", width: 54, value: (item) => titleCase(item.issue_severity) },
   ];
+  const statusCounts = Object.fromEntries(Object.keys(STATUS_LABELS).map((status) => [status, 0]));
+  let criticalCount = 0;
+  let warningCount = 0;
+  items.forEach((item) => {
+    const status = String(item.settlement_status || "pending").toLowerCase();
+    if (Object.prototype.hasOwnProperty.call(statusCounts, status)) statusCounts[status] += 1;
+    if (item.issue_severity === "critical") criticalCount += 1;
+    if (item.issue_severity === "warning") warningCount += 1;
+  });
+  const maxStatusCount = Math.max(1, ...Object.values(statusCounts));
   const rowsPerPage = 21;
   const pages = [];
   for (let start = 0; start < items.length; start += rowsPerPage) pages.push(items.slice(start, start + rowsPerPage));
@@ -414,10 +447,27 @@ function makePdfReport(items, filterLabels) {
     const text = (value, x, y, size, bold = false, color = "0.16 0.22 0.31") => {
       commands.push(`BT /F${bold ? 2 : 1} ${size} Tf ${color} rg 1 0 0 1 ${x} ${y} Tm (${pdfAscii(value)}) Tj ET`);
     };
+    const fillRect = (x, y, width, height, color) => {
+      commands.push(`${color} rg ${x} ${y} ${width} ${height} re f`);
+    };
     commands.push("q");
-    text("RECON | Transaction reconciliation report", margin, 560, 17, true, "0.09 0.15 0.24");
+    text("RECON | Transaction reconciliation report", margin, 560, 17, true, "0.12 0.30 0.62");
     text(`Generated ${generatedAt}  |  ${items.length} transactions`, margin, 541, 8, false, "0.42 0.48 0.57");
-    text(`Filters: ${pdfFit(filterText, pageWidth - margin * 2 - 42, 7)}`, margin, 526, 7, false, "0.42 0.48 0.57");
+    text(`Filters: ${pdfFit(filterText, 500, 7)}`, margin, 526, 7, false, "0.42 0.48 0.57");
+
+    const insightX = 570;
+    text("SETTLEMENT MIX", insightX, 575, 7, true, "0.12 0.30 0.62");
+    text(`${items.length} transactions | ${criticalCount} critical | ${warningCount} warnings`, insightX, 563, 5.8, false, "0.42 0.48 0.57");
+    Object.keys(STATUS_LABELS).forEach((status, index) => {
+      const y = 551 - index * 7.5;
+      const count = statusCounts[status];
+      const style = pdfStatusStyles[status];
+      text(pdfFit(STATUS_LABELS[status], 48, 5.5), insightX, y, 5.5, false, "0.42 0.48 0.57");
+      fillRect(622, y - 1, 100, 4, "0.93 0.95 0.97");
+      if (count) fillRect(622, y - 1, Math.max(2, (count / maxStatusCount) * 100), 4, style.fill);
+      text(String(count), 731, y, 5.5, true, style.fill);
+    });
+
     const tableTop = 506;
     const headerHeight = 21;
     commands.push(`0.94 0.96 0.98 rg ${margin} ${tableTop - headerHeight} ${pageWidth - margin * 2} ${headerHeight} re f`);
@@ -433,7 +483,23 @@ function makePdfReport(items, filterLabels) {
       if (rowIndex % 2 === 1) commands.push(`0.985 0.989 0.995 rg ${margin} ${yBottom} ${pageWidth - margin * 2} ${rowHeight} re f`);
       let cellX = margin;
       columns.forEach((column) => {
-        text(pdfFit(column.value(item), column.width - 10, 7), cellX + 5, yBottom + 7, 7, false, "0.2 0.26 0.35");
+        if (column.key === "settlement_status") {
+          const status = String(item.settlement_status || "pending").toLowerCase();
+          const style = pdfStatusStyles[status] || pdfStatusStyles.not_applicable;
+          const label = titleCase(status);
+          const badgeWidth = Math.min(column.width - 10, label.length * 3.3 + 10);
+          fillRect(cellX + 5, yBottom + 5, badgeWidth, 10, style.background);
+          text(pdfFit(label, badgeWidth - 7, 6.2), cellX + 8, yBottom + 7, 6.2, true, style.fill);
+        } else if (column.key === "issue_severity") {
+          const severity = String(item.issue_severity || "none").toLowerCase();
+          const style = pdfIssueStyles[severity] || pdfIssueStyles.none;
+          const label = severity === "none" ? "Clear" : titleCase(severity);
+          const badgeWidth = Math.min(column.width - 10, label.length * 3.2 + 10);
+          fillRect(cellX + 5, yBottom + 5, badgeWidth, 10, style.background);
+          text(pdfFit(label, badgeWidth - 7, 6.1), cellX + 8, yBottom + 7, 6.1, true, style.text);
+        } else {
+          text(pdfFit(column.value(item), column.width - 10, 7), cellX + 5, yBottom + 7, 7, false, "0.2 0.26 0.35");
+        }
         cellX += column.width;
       });
       commands.push(`0.90 0.92 0.95 RG ${margin} ${yBottom} m ${pageWidth - margin} ${yBottom} l S`);
@@ -543,7 +609,7 @@ async function loadDashboard({ refreshAll = false, offset = 0 } = {}) {
   if (status) params.set("settlement_status", status);
   if (issue) params.set("issue", issue);
   Object.entries(advanced).forEach(([key, value]) => { if (value) params.set(key, value); });
-  params.set("limit", String(TRANSACTION_PAGE_SIZE));
+  params.set("limit", String(state.pageSize));
   params.set("offset", String(state.transactionOffset));
   const allTransactionsRequest = state.transactionsLoaded && !refreshAll ? Promise.resolve(null) : fetchAllTransactions();
   const [summaryResponse, transactionsResponse, unmatchedResponse, allTransactions] = await Promise.all([
@@ -631,12 +697,12 @@ function updateOverviewFilters() {
 }
 
 $("#overview-previous").addEventListener("click", () => {
-  state.overviewOffset = Math.max(0, state.overviewOffset - TRANSACTION_PAGE_SIZE);
+  state.overviewOffset = Math.max(0, state.overviewOffset - state.pageSize);
   renderOverviewTransactions();
 });
 $("#overview-next").addEventListener("click", () => {
-  if (state.overviewOffset + TRANSACTION_PAGE_SIZE < state.overviewTransactions.length) {
-    state.overviewOffset += TRANSACTION_PAGE_SIZE;
+  if (state.overviewOffset + state.pageSize < state.overviewTransactions.length) {
+    state.overviewOffset += state.pageSize;
     renderOverviewTransactions();
   }
 });
@@ -647,12 +713,38 @@ document.querySelectorAll('[data-filter-scope="overview"] [data-filter]').forEac
   control.addEventListener(control.type === "number" ? "input" : "change", updateOverviewFilters);
 });
 $("#transactions-previous").addEventListener("click", () => {
-  loadDashboard({ offset: Math.max(0, state.transactionOffset - TRANSACTION_PAGE_SIZE) }).catch((error) => showNotice(error.message, "error"));
+  loadDashboard({ offset: Math.max(0, state.transactionOffset - state.pageSize) }).catch((error) => showNotice(error.message, "error"));
 });
 $("#transactions-next").addEventListener("click", () => {
-  if (state.transactionOffset + TRANSACTION_PAGE_SIZE < state.transactionTotal) {
-    loadDashboard({ offset: state.transactionOffset + TRANSACTION_PAGE_SIZE }).catch((error) => showNotice(error.message, "error"));
+  if (state.transactionOffset + state.pageSize < state.transactionTotal) {
+    loadDashboard({ offset: state.transactionOffset + state.pageSize }).catch((error) => showNotice(error.message, "error"));
   }
+});
+function syncPageSizeControls() {
+  document.querySelectorAll("[data-page-size]").forEach((control) => {
+    control.value = String(state.pageSize);
+  });
+}
+
+document.querySelectorAll("[data-page-size]").forEach((control) => {
+  control.addEventListener("change", () => {
+    const pageSize = Number(control.value);
+    if (!PAGE_SIZE_OPTIONS.includes(pageSize) || pageSize === state.pageSize) {
+      syncPageSizeControls();
+      return;
+    }
+    state.pageSize = pageSize;
+    state.transactionOffset = Math.floor(state.transactionOffset / pageSize) * pageSize;
+    state.overviewOffset = Math.floor(state.overviewOffset / pageSize) * pageSize;
+    try {
+      localStorage.setItem("recon.pageSize", String(pageSize));
+    } catch {
+      // Page-size selection still applies for this session when storage is unavailable.
+    }
+    syncPageSizeControls();
+    renderOverviewTransactions();
+    loadDashboard({ offset: state.transactionOffset }).catch((error) => showNotice(error.message, "error"));
+  });
 });
 document.querySelectorAll("[data-export-format]").forEach((button) => {
   button.addEventListener("click", () => exportTransactions(button.dataset.exportFormat, button.dataset.exportSource, button));
@@ -741,6 +833,7 @@ $("#upload-form").addEventListener("submit", async (event) => {
 });
 
 renderLatestImport(state.latestImport);
+syncPageSizeControls();
 showPage(window.location.hash.slice(1) || "imports", { updateAddress: false });
 loadUploadConfiguration().catch(() => {
   $("#upload-limit").textContent = "enforced by server";
