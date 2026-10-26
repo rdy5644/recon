@@ -338,6 +338,39 @@ def create_app(db_path: str | Path | None = None) -> FastAPI:
             row["settlement_amount"] = money_number(row["settlement_amount"])
         return {"items": rows, "total": total, "limit": limit, "offset": offset}
 
+    @application.get("/dashboard/merchants")
+    def dashboard_merchants(request: Request):
+        response={}
+        with database_connection(request.app.state.database_path) as connection:
+            merchant_names = connection.execute("SELECT merchant_name from transactions").fetchall()
+            for merchant_name in merchant_names:
+                merchant_name = merchant_name[0]
+                transactions_rows = connection.execute("SELECT * from transactions where merchant_name = ?",(merchant_name,)).fetchall()
+                total_transactions_count = len(transactions_rows)
+                net_settled = 0
+                total_transaction_amount = 0
+                critical_issue_count = 0
+                for row in transactions_rows:
+                    row = dict(row)
+                    total_transaction_amount += parse_money(row["transaction_amount"])
+                    net_settled += parse_money(row["total_settled_amount"])
+                    settlement_rows = _settlements_for(connection, row["transaction_id"])
+                    issues = issue_flags(row, settlement_rows, as_of=date.today())
+                    severity = "critical" if any(item["severity"] == "critical" for item in issues) else (
+                        "warning" if issues else "none"
+                    )
+                    if severity == "critical":
+                        critical_issue_count += 1
+                outstanding = total_transaction_amount - net_settled
+                response[merchant_name] = {
+                    "total_transactions_count": total_transactions_count,
+                    "net_settled": money_number(net_settled),
+                    "total_transaction_amount": money_number(total_transaction_amount),
+                    "outstanding": money_number(outstanding),
+                    "critical_issue_count": critical_issue_count
+                }
+        return response
+
     return application
 
 

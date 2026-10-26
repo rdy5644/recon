@@ -93,6 +93,13 @@ def issue_flags(
                 "recommendation": "Confirm the payment outcome and reverse or reassign the settlement if needed.",
             })
         return flags
+    elif transaction.get("last_settlement_date") < transaction.get("transaction_date"):
+        flags.append({
+            "code": "settlement_before_transaction",
+            "severity": "warning",
+            "message": "A settlement is recorded before the transaction date.",
+            "recommendation": "Check the settlement provider report and confirm whether this transaction was included.",
+        })
 
     if not rows:
         try:

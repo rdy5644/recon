@@ -167,9 +167,10 @@ def parse_csv(contents: bytes) -> tuple[list[SettlementInput], int]:
             errors.append({"row": row_number, "field": "currency", "message": "Use a three-letter currency code."})
         if not transaction_date or not settlement_date or settlement_type not in {"DEBIT", "CREDIT"} or len(currency) != 3 or amount <= 0:
             continue
-        if settlement_date < transaction_date:
-            errors.append({"row": row_number, "field": "settlement_date", "message": "Settlement date cannot precede transaction date."})
-            continue
+        # Commented to complete the task to show Warning for settlement date before transaction date instead of Critical
+        # if settlement_date < transaction_date:
+        #     errors.append({"row": row_number, "field": "settlement_date", "message": "Settlement date cannot precede transaction date."})
+        #     continue
 
         record = SettlementInput(
             settlement_id=settlement_id,
